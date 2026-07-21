@@ -1,98 +1,98 @@
 # Indoor Security Rover
 
-An Arduino-based indoor security rover designed to patrol interior spaces, detect nearby obstacles, and provide a movable pan-tilt camera platform. This project is being assembled from individual components rather than a complete rover kit.
+An ELEGOO Smart Robot Car V4.0 adapted as an indoor security rover with autonomous obstacle avoidance and an ESP32-S3 camera feed.
 
-## Project Objective
+## Current working baseline
 
-The goal is to build a compact mobile security platform that combines:
+Project 1 is operational as a standalone rover:
 
-- Differential-drive movement
-- Forward and rear obstacle detection
-- A two-axis pan-tilt camera
-- Manual and autonomous operating modes
-- A modular two-level chassis that can be expanded later
+- Arduino Uno controls the four drive motors as left and right motor groups.
+- A front ultrasonic sensor detects obstacles.
+- A dedicated servo scans the ultrasonic sensor to compare the left and right routes.
+- Autonomous mode uses reduced speed and disables aggressive MPU6050 yaw correction to prevent weaving.
+- An ESP32-S3 camera creates a Wi-Fi access point and provides a live phone-viewable feed.
 
-## Current Prototype
+The working Uno firmware is in [`firmware/uno/SmartRobotCarV4_0_V1_20230201`](firmware/uno/SmartRobotCarV4_0_V1_20230201).
 
-> **Project photo placeholder — current hardware prototype with wiring and rear support wheel installation still in progress.**
+## Final Uno behavior
 
-A completed build photograph will replace this placeholder after wiring and initial movement testing.
+The autonomous obstacle routine currently uses:
 
-## Hardware
+- Forward speed: `80`
+- Reverse speed: `75`
+- Turn speed: `85`
+- Blocked-distance threshold: `35 cm`
+- Ultrasonic scan angles: right `30°`, center `90°`, left `150°`
+- Obstacle-mode straight-line correction: `Kp = 0`
+- Obstacle-mode motor upper limit: `110`
 
-- Arduino Uno-compatible controller
-- Arduino expansion and motor-control board
-- Two TT DC gear motors
-- Two drive wheels
-- Rear support wheel or caster (pending)
-- Two ultrasonic distance sensors
-  - One fixed forward-facing sensor
-  - One fixed rear-facing sensor
-- Pan-and-tilt camera bracket
-- Two SG90 micro servos
-- ELEGOO camera module
-- Battery holder with power switch
-- Hand-cut two-level acrylic chassis
-- Standoffs, motor mounts, brackets, and wiring
+When the path is blocked, the rover stops, backs away, scans right and left, returns the sensor to center, and turns toward the route with more space. If both routes are blocked, it backs farther away and performs a longer turn.
 
-## Mechanical Design
+## Hardware and wiring
 
-The rover uses a two-level chassis:
+| Device | Connection |
+| --- | --- |
+| Front ultrasonic sensor | TRIG D13, ECHO D12, 5 V, GND |
+| Ultrasonic scan servo | SERVO1 / D10, 5 V, GND |
+| Camera rotation servo | A1 signal, 5 V, GND |
+| Drive motors | TB6612 motor driver; left and right motor groups |
+| ESP32-S3 camera | Camera communication port and regulated 5 V supply |
 
-- **Lower level:** drive motors, battery, power wiring, and obstacle sensors
-- **Upper level:** Arduino controller, expansion board, and pan-tilt camera assembly
+See [`docs/WIRING_AND_CONFIGURATION.md`](docs/WIRING_AND_CONFIGURATION.md) for the complete programming and configuration record.
 
-The battery is positioned low and toward the rear to improve stability. The camera is elevated on the upper platform for a clearer field of view. The ultrasonic sensors remain fixed to the chassis so obstacle readings are independent of camera direction.
+## Arduino Uno setup
 
-## Current Build Status
+- Board: Arduino Uno
+- Final programming port: COM9 on the development computer
+- Required libraries:
+  - FastLED 3.3.3
+  - Servo 1.2.2
+  - Wire 1.0
 
-- [x] Cut and shaped the acrylic chassis
-- [x] Installed both drive motors and wheels
-- [x] Installed upper-deck standoffs
-- [x] Mounted the battery holder on the lower deck
-- [x] Mounted the Arduino and expansion board
-- [x] Assembled the pan-tilt mechanism
-- [x] Mounted the camera module
-- [ ] Install rear support wheel or caster
-- [ ] Mount the front and rear ultrasonic sensors
-- [ ] Complete power and signal wiring
-- [ ] Test left and right motors independently
-- [ ] Test pan and tilt limits
-- [ ] Test obstacle-distance measurements
-- [ ] Integrate autonomous movement logic
-- [ ] Complete indoor driving tests
+Open `SmartRobotCarV4_0_V1_20230201.ino` from its folder so Arduino IDE loads all companion `.cpp` and `.h` files.
 
-## Planned Rover Behavior
+### Upload procedure
 
-The first autonomous version will use the following basic responses:
+1. Turn the rover battery off.
+2. Disconnect the camera communication cable from the Uno shield.
+3. Move the shield switch to **Upload**.
+4. Close Serial Monitor and any other application using the COM port.
+5. Select **Arduino Uno** and the correct COM port.
+6. Upload the sketch.
+7. Reconnect the camera cable and move the switch back to **Cam**.
+8. Power the rover and test it with the wheels raised before floor testing.
 
-- Move forward while the path is clear
-- Stop when the front sensor detects an obstacle
-- Turn away or reverse when forward movement is blocked
-- Stop reversing when the rear sensor detects an obstacle
-- Keep the camera pan and tilt controls independent from obstacle detection
+## ESP32-S3 camera baseline
 
-## Initial Test Sequence
+- Board: ESP32S3 Dev Module
+- Espressif Arduino core: 2.0.14
+- Flash: 8 MB
+- Partition: default 8 MB layout
+- USB CDC On Boot: enabled
+- PSRAM: disabled
+- Access point: device-hosted local Wi-Fi network
+- Camera page: local device page shown by the serial monitor at startup
 
-1. Verify battery voltage and polarity.
-2. Power and test the Arduino controller.
-3. Test the pan servo.
-4. Test the tilt servo.
-5. Test each ultrasonic sensor independently.
-6. Test the left drive motor.
-7. Test the right drive motor.
-8. Verify camera operation.
-9. Perform a low-speed combined movement test.
-10. Add autonomous obstacle-avoidance logic.
+The working ESP32 camera source was not included in the current source archive, so it has not been added to this update. Its verified build settings are preserved here for reproduction.
 
-## Safety and Wiring Notes
+## Verification status
 
-- The drive motors will be powered through the motor driver, not directly from Arduino GPIO pins.
-- The servos will use an appropriate regulated supply.
-- Controller, motor-driver, sensor, and servo grounds will share a common ground.
-- Wiring will be secured away from the wheels and moving pan-tilt assembly.
-- Motor terminals will be insulated after individual testing.
+- [x] Uno firmware compiles and uploads
+- [x] Four drive motors operate as left and right groups
+- [x] Reduced-speed autonomous movement works
+- [x] Front obstacle detection works
+- [x] Ultrasonic servo scans left and right
+- [x] Rover selects a clearer route
+- [x] ESP32-S3 camera feed opens on a phone
+- [ ] Complete a 10-minute Wi-Fi endurance test
+- [ ] Add software control for the A1 camera-rotation servo
+- [ ] Archive the final ESP32-S3 camera source in this repository
 
-## Project Status
+## Engineering lesson learned
 
-**In progress — mechanical assembly is substantially complete, with rear support, wiring, firmware, and testing remaining.**
+Ohm out every connector immediately after completing it. With power disconnected, verify the expected pin-to-pin continuity, check for shorts to adjacent pins and power rails, confirm polarity, and perform a light tug/flex test. This prevents wiring faults from becoming lengthy software troubleshooting problems later.
+
+## Project phases
+
+- **Project 1:** standalone autonomous rover with obstacle avoidance and camera feed — operational.
+- **Project 2:** integration with the larger security system, including remote commands, event logging, alerts, and fail-safe behavior.
